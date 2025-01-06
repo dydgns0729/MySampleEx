@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Collections;
 
 namespace MySampleEx
 {
@@ -10,7 +12,8 @@ namespace MySampleEx
     public class BaseData : ScriptableObject
     {
         #region Variables
-        public string[] names;
+        //public string[] names;
+        public List<string> names;
         public const string DataDirectory = "/ResourcesData/Resources/Data/";
         #endregion
 
@@ -21,7 +24,7 @@ namespace MySampleEx
         public int GetDataCount()
         {
             if (names == null) return 0;
-            return names.Length;
+            return names.Count;
         }
 
         //이름 목록 리스트 얻어오기
@@ -60,7 +63,7 @@ namespace MySampleEx
         }
 
         //데이터 복사
-        public virtual void CopyData(int index)
+        public virtual void Copy(int index)
         {
 
         }
