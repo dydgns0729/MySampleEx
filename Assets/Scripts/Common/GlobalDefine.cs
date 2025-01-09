@@ -3,7 +3,7 @@ using UnityEngine;
 namespace MySampleEx
 {
     /// <summary>
-    /// 이펙트 타입 정의
+    /// 이펙트 타입
     /// </summary>
     public enum EffectType
     {

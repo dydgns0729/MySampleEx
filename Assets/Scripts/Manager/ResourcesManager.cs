@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityObject = UnityEngine.Object;
+
 namespace MySampleEx
 {
     /// <summary>
@@ -15,12 +16,12 @@ namespace MySampleEx
         public static GameObject LoadAndInstantiate(string path)
         {
             UnityObject source = Load(path);
-            if(source == null)
+            if (source == null)
             {
                 return null;
             }
 
-            return GameObject.Instantiate(source) as GameObject;
+            return Instantiate(source) as GameObject;
         }
     }
 }

@@ -9,9 +9,9 @@ namespace MySampleEx
         public string description;
 
         public int mana;
-        public int health;
         public int attack;
+        public int health;
 
-        public Sprite artImage;
+        public Sprite argImage;
     }
 }

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Xml;
 using UnityEngine.UI;
 using TMPro;
-using System;
 
 namespace MySampleEx
 {
@@ -16,8 +15,8 @@ namespace MySampleEx
     public class DialogUI : MonoBehaviour
     {
         #region Variables
-        //XML 
-        public string xmlFile = "Dialog/Dialog";    //Path (.../Resources/ 가 생략되어있음)
+        //XML
+        public string xmlFile = "Dialog/Dialog";    //Path
         private XmlNodeList allNodes;
 
         private Queue<Dialog> dialogs;
@@ -31,17 +30,17 @@ namespace MySampleEx
 
         private void Start()
         {
-            
             //xml 데이터 파일 읽기
             LoadDialogXml(xmlFile);
 
             dialogs = new Queue<Dialog>();
             InitDialog();
 
-            StartDialog(1);
+            //
+            StartDialog(0);
         }
 
-        //Xml 데이터 읽기
+        //Xml 데이터 읽어 들이기
         private void LoadDialogXml(string path)
         {
             TextAsset xmlFile = Resources.Load<TextAsset>(path);
@@ -57,20 +56,16 @@ namespace MySampleEx
             dialogs.Clear();
 
             npcImage.SetActive(false);
-
             nameText.text = "";
             sentenceText.text = "";
 
             nextButton.SetActive(false);
-            StopAllCoroutines();
         }
-
 
         //대화 시작하기
         public void StartDialog(int dialogIndex)
         {
-            InitDialog();
-            //현재 대화씬 내용을 큐에 저장
+            //현재 대화씬(dialogIndex) 내용을 큐에 입력
             foreach (XmlNode node in allNodes)
             {
                 int num = int.Parse(node["number"].InnerText);
@@ -90,23 +85,26 @@ namespace MySampleEx
             DrawNextDialog();
         }
 
-        //다음 대화를 보여준다 - (큐)dialogs에서 하나 꺼내서 보여준다.
+        //다음 대화를 보여준다 - (큐)dialogs에서 하나 꺼내서 보여준다
         public void DrawNextDialog()
         {
-            if (dialogs.Count == 0)
+            //dialogs 체크
+            if(dialogs.Count == 0)
             {
                 EndDialog();
                 return;
             }
+
+            //dialogs에서 하나 꺼내온다
             Dialog dialog = dialogs.Dequeue();
 
-            if (dialog.character > 0)
+            if(dialog.character > 0)
             {
-                npcImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dialog/Npc/npc0" + dialog.character.ToString());
                 npcImage.SetActive(true);
-
+                npcImage.GetComponent<Image>().sprite = Resources.Load<Sprite>(
+                    "Dialog/Npc/npc0" + dialog.character.ToString());
             }
-            else //NpcImg 제거
+            else //dialog.character <= 0
             {
                 npcImage.SetActive(false);
             }
@@ -114,7 +112,6 @@ namespace MySampleEx
             nextButton.SetActive(false);
 
             nameText.text = dialog.name;
-            //sentenceText.text = dialog.sentence;
             StartCoroutine(typingSentence(dialog.sentence));
         }
 
@@ -122,15 +119,17 @@ namespace MySampleEx
         IEnumerator typingSentence(string typingText)
         {
             sentenceText.text = "";
-            foreach(char latter in typingText)
+
+            foreach (char latter in typingText)
             {
                 sentenceText.text += latter;
-                yield return new WaitForSeconds(0.05f);
+                yield return new WaitForSeconds(0.03f);
             }
+
             nextButton.SetActive(true);
         }
 
-        // Dialog 종료
+        //대화 종료
         private void EndDialog()
         {
             InitDialog();

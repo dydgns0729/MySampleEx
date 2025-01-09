@@ -17,15 +17,15 @@ namespace MySampleEx
         {
             string retString = string.Empty;
 
-            //p_clip 클립의 전체 경로 : Assets/ResourcesData/Resources/EffectData/
+            //p_clip 클립의 전체 경로  : Assets/ResourcesData/Resources/EffectData...
             retString = AssetDatabase.GetAssetPath(p_clip);
             string[] path_node = retString.Split('/');
             bool findResources = false;
-            for (int i = 0; i < path_node.Length; i++)
+            for (int i = 0; i < path_node.Length - 1; i++)
             {
-                if (!findResources)
+                if(findResources == false)
                 {
-                    if (path_node[i] == "Resources")
+                    if(path_node[i] == "Resources")
                     {
                         findResources = true;
                         retString = string.Empty;
@@ -36,6 +36,7 @@ namespace MySampleEx
                     retString += path_node[i] + "/";
                 }
             }
+
             return retString;
         }
 
@@ -49,20 +50,82 @@ namespace MySampleEx
             entittyTemplate = entittyTemplate.Replace("$DATA$", data.ToString());
 
             string folderPath = "Assets/Scripts/GameData/";
-            if (!Directory.Exists(folderPath))
+            if (Directory.Exists(folderPath) == false)
             {
-                Debug.LogWarning($"{folderPath}을 찾을 수 없습니다");
                 Directory.CreateDirectory(folderPath);
-                Debug.Log("해당 경로에 폴더를 만들었습니다");
             }
+
             string filePath = folderPath + enumName + ".cs";
-            //해당파일이 존재하면 삭제한다
-            if (File.Exists(filePath))
+            //파일이 존재하면 파일을 삭제한다
+            if(File.Exists(filePath))
             {
                 File.Delete(filePath);
             }
 
             File.WriteAllText(filePath, entittyTemplate);
         }
+
+        //데이터 툴 상단 레이어, Add, Copy, Remove 버튼 그리기
+        public static void EditToolTopLayer(BaseData data, ref int selection,
+                ref UnityObject source, int uiWith)
+        {
+            EditorGUILayout.BeginHorizontal();
+            {
+                if(GUILayout.Button("Add", GUILayout.Width(uiWith)))
+                {
+                    data.AddData("NewData");
+                    selection = data.GetDataCount() - 1;
+                    source = null;
+                }
+                if (GUILayout.Button("Copy", GUILayout.Width(uiWith)))
+                {
+                    data.Copy(selection);
+                    selection = data.GetDataCount() - 1;
+                    source = null;
+                }
+                if (data.GetDataCount() > 1)
+                {
+                    if (GUILayout.Button("Remove", GUILayout.Width(uiWith)))
+                    {
+                        source = null;
+                        data.RemoveData(selection);
+                    }
+                }
+                //
+                if(selection > data.GetDataCount() - 1)
+                {
+                    selection = data.GetDataCount() - 1;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        //데이터 목록 리스트 그리기
+        public static void EditorToolListLayer(BaseData data, ref int selection,
+                ref UnityObject source, int uiWidth, ref Vector2 scrollPosition)
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(uiWidth));
+            {
+                EditorGUILayout.Separator();
+                EditorGUILayout.BeginVertical("box");
+                {
+                    scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+                    {
+                        int lastSelect = selection;
+                        selection = GUILayout.SelectionGrid(selection, data.GetNameList(true), 1);
+                        //다른 데이터를 선택하면
+                        if (lastSelect != selection)
+                        {
+                            source = null;
+                        }
+                    }
+                    EditorGUILayout.EndScrollView();
+                }
+                EditorGUILayout.EndVertical();
+            }
+            EditorGUILayout.EndVertical();
+        }
     }
+
+
 }

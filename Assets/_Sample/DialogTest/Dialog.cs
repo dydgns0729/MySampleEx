@@ -1,3 +1,4 @@
+
 namespace MySampleEx
 {
     /// <summary>
