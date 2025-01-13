@@ -1,3 +1,5 @@
+using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace MySampleEx
@@ -29,10 +31,29 @@ namespace MySampleEx
             get { return !Mathf.Approximately(m_Input.Move.sqrMagnitude, 0f); }
         }
 
+        //점프
+        public float gravity = 20f;                 //중력값, 아래로 끌어당기는 가속도 값
+        public float jumpSpeed = 10f;               //점프 속도
+
+        protected bool m_ReadyToJump = false;       //점프 준비 단계
+        protected float m_VerticalSpeed;            //위아래 이동 속도
+
+        //대기 상태로 보내기
+        public float idleTimeout = 5f;              //이동상태 대기에서 5초가 지나면 대기 상태로 보낸다
+        protected float m_idleTimer = 0f;           //타이머 카운드
+
+        //카메라(프리룩)
+        public CameraSettings cameraSettings;
+
+        //공격
+        protected bool m_InAttack;                  //공격 여부 판단
+
         //상수
         const float k_GroundAcceleration = 20f;   //이동 가속도값
         const float k_GroundDeceleration = 25f;   //이동 감속도값
         const float k_GroundedRayDistance = 1f;   //그라운드 체크시 레이 거리값
+        const float k_JumpAbortSpeed = 10f;       //공중에서 감속시키는 속도
+        const float k_StickingGravityPropotion = 0.3f;  
 
         //애니메이션 상태
         protected bool m_IsAnimatorTransitioning;               //상태 전환 중이냐?
@@ -46,9 +67,16 @@ namespace MySampleEx
         readonly int m_HashForwardSpeed = Animator.StringToHash("ForwardSpeed");
         readonly int m_HashAngleDeltaRad = Animator.StringToHash("AngleDeltaRad");
         readonly int m_HashInputDetected = Animator.StringToHash("InputDetected");
+        readonly int m_HashGrounded = Animator.StringToHash("Grounded");
+        readonly int m_HashAirborneVerticalSpeed = Animator.StringToHash("AirborneVerticalSpeed");
+        readonly int m_HashTimeoutIdle = Animator.StringToHash("TimeoutIdle");
+        readonly int m_HashMeleeAttack = Animator.StringToHash("MeleeAttack");
+        readonly int m_HashStateTime = Animator.StringToHash("StateTime");
 
         //애니메이션 상태 해시값
         readonly int m_HashLocomotion = Animator.StringToHash("Locomotion");
+        readonly int m_HashAirborne = Animator.StringToHash("Airborne");
+        readonly int m_HashLanding = Animator.StringToHash("Landing");
         #endregion
 
         private void Awake()
@@ -57,12 +85,25 @@ namespace MySampleEx
             m_Input = GetComponent<PlayerInputAction>();
             m_Animator = GetComponent<Animator>();
             m_CharCtrl = GetComponent<CharacterController>();
+
+            cameraSettings = FindAnyObjectByType<CameraSettings>();
+            if (cameraSettings != null)
+            {
+                if (cameraSettings.follow == null)
+                    cameraSettings.follow = this.transform;
+                if (cameraSettings.lookAt == null)
+                    cameraSettings.lookAt = this.transform.Find("HeadTarget");
+            }
         }
 
         private void FixedUpdate()
         {
             CacheAnimatorState();
+
+            AttackState();
+
             CalculateForwardMovement();
+            CalculateVerticalMovement();
 
             SetTargetRotation();
             if(IsOrientationUpdate() && IsMoveInput)
@@ -88,8 +129,21 @@ namespace MySampleEx
         bool IsOrientationUpdate()
         {
             bool updateOrientationForLocomotion = (!m_IsAnimatorTransitioning && m_CurrentStateInfo.shortNameHash == m_HashLocomotion || m_NxetStateInfo.shortNameHash == m_HashLocomotion);
+            bool updateOrientationForAirbon = (!m_IsAnimatorTransitioning && m_CurrentStateInfo.shortNameHash == m_HashAirborne || m_NxetStateInfo.shortNameHash == m_HashAirborne);
+            bool updateOrientationForLanding = (!m_IsAnimatorTransitioning && m_CurrentStateInfo.shortNameHash == m_HashLanding || m_NxetStateInfo.shortNameHash == m_HashLanding);
 
-            return updateOrientationForLocomotion;
+            return updateOrientationForLocomotion || updateOrientationForAirbon || updateOrientationForLanding;
+        }
+
+        //공격 처리
+        void AttackState()
+        {
+            m_Animator.ResetTrigger(m_HashMeleeAttack);
+
+            m_Animator.SetFloat(m_HashStateTime, 
+                Mathf.Repeat(m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime, 1f));
+            if (m_Input.Attack)
+                m_Animator.SetTrigger(m_HashMeleeAttack);
         }
 
         //(Forward)이동 속도 계산
@@ -112,6 +166,49 @@ namespace MySampleEx
             //애니 입력값 설정
             m_Animator.SetFloat(m_HashForwardSpeed, m_ForwardSpeed);
         }
+        
+        //위, 아래 이동 속도 구하기
+        void CalculateVerticalMovement()
+        {
+            if(m_IsGrounded)
+            {
+                m_ReadyToJump = true;
+            }
+            else
+            {
+                m_Input.Jump = false;
+            }
+
+
+            if (m_IsGrounded)
+            {
+                m_VerticalSpeed = -gravity * k_StickingGravityPropotion;
+
+                if(m_Input.Jump && m_ReadyToJump)
+                {
+                    m_VerticalSpeed = jumpSpeed;
+
+                    m_IsGrounded = false;
+                    m_ReadyToJump = false;
+                    m_Input.Jump = false;
+                }
+            }
+            else
+            {
+                if(!m_Input.Jump && m_VerticalSpeed > 0f)
+                {
+                    m_VerticalSpeed -= k_JumpAbortSpeed * Time.deltaTime;
+                }
+
+                if(Mathf.Approximately(m_VerticalSpeed, 0f))
+                {
+                    m_VerticalSpeed = 0f;
+                }
+
+                m_VerticalSpeed -= gravity * Time.deltaTime;
+            }
+        }
+
 
         //이동 방향 계산
         void SetTargetRotation()
@@ -120,10 +217,15 @@ namespace MySampleEx
             Vector3 localMovementDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
 
             //TODO: Camera forward 구하기
-            Vector3 forward = Vector3.forward;
+            //Vector3 forward = Vector3.forward;
+            Vector3 forward = Quaternion.Euler(0f,
+                cameraSettings.freeLookCamera.GetComponent<CinemachineOrbitalFollow>().HorizontalAxis.Value,
+                0f) * Vector3.forward;
+            forward.y = 0f;
+            forward.Normalize();
 
             Quaternion targetRotation;
-            if (Mathf.Approximately(Vector3.Dot(localMovementDirection, forward), -1.0f))
+            if (Mathf.Approximately(Vector3.Dot(localMovementDirection, Vector3.forward), -1.0f))
             {
                 targetRotation = Quaternion.LookRotation(-forward);
             }
@@ -158,11 +260,30 @@ namespace MySampleEx
             transform.rotation = m_TragetRotation;
         }
 
-        //시간이 경과되면 아이들 상태로 보낸다
+        //이동상태의 대기에서 대기시간(5초)이 지나면 대기 상태로 보낸다
         void TimoutToIdle()
         {
             //입력값 체크(이동, 공격)
-            bool inputDetected = IsMoveInput;
+            bool inputDetected = IsMoveInput || m_Input.Jump || m_Input.Attack;
+
+            //타이머 카운트
+            if (m_IsGrounded && !inputDetected)
+            {
+                m_idleTimer += Time.deltaTime;
+                if (m_idleTimer >= idleTimeout)
+                {
+                    m_Animator.SetTrigger(m_HashTimeoutIdle);
+
+                    //초기화
+                    m_idleTimer = 0;
+                }
+            }
+            else
+            {
+                //초기화
+                m_idleTimer = 0;
+                m_Animator.ResetTrigger(m_HashTimeoutIdle);
+            }
 
             //애니 입력값 설정
             m_Animator.SetBool(m_HashInputDetected, inputDetected);
@@ -190,11 +311,22 @@ namespace MySampleEx
                 movement = m_ForwardSpeed * transform.forward * Time.deltaTime;
             }
 
+            //Y축 이동속도 적용
+            movement += m_VerticalSpeed * Vector3.up * Time.deltaTime;
+
             //회전값 설정
             m_CharCtrl.transform.rotation *= m_Animator.deltaRotation;
 
             //이동
             m_CharCtrl.Move(movement);
+
+            //애니메이션 적용
+            m_IsGrounded = m_CharCtrl.isGrounded;
+
+            if(m_IsGrounded == false)
+                m_Animator.SetFloat(m_HashAirborneVerticalSpeed, m_VerticalSpeed);
+
+            m_Animator.SetBool(m_HashGrounded, m_IsGrounded);
         }
 
     }
