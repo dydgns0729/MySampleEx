@@ -110,6 +110,28 @@ namespace MySampleEx
             m_Animator.SetBool(m_HashInputDetected, inputDetected);
         }
 
+        /*private void OnAnimatorMove()
+        {
+            // Follow NavMeshAgent
+            //Vector3 position = agent.nextPosition;
+            //animator.rootPosition = agent.nextPosition;
+            //transform.position = position;
+
+            // Follow CharacterController
+            Vector3 position = transform.position;
+            position.y = agent.nextPosition.y;
+
+            animator.rootPosition = position;
+            agent.nextPosition = position;
+
+            // Follow RootAnimation
+            //Vector3 position = animator.rootPosition;
+            //position.y = agent.nextPosition.y;
+
+            //agent.nextPosition = position;
+            //transform.position = position;
+        }*/
+
         private void OnAnimatorMove()
         {
             //캐릭터 위치 보정

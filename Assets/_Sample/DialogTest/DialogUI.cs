@@ -5,7 +5,7 @@ using System.Xml;
 using UnityEngine.UI;
 using TMPro;
 
-namespace MySampleEx
+namespace MySample
 {
     /// <summary>
     /// 대화창 구현 클래스

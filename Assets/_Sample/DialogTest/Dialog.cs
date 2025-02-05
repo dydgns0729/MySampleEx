@@ -1,5 +1,5 @@
 
-namespace MySampleEx
+namespace MySample
 {
     /// <summary>
     /// Dialog 데이터 모델 클래스

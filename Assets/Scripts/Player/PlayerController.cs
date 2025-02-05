@@ -7,9 +7,14 @@ namespace MySampleEx
     /// <summary>
     /// 플레이어 캐릭터 제어(이동, 애니메이션, ..) 관리 클레스
     /// </summary>
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour, IMessageReceiver
     {
         #region Variables
+        //
+        public InventoryObject inventory;
+        public InventoryObject equipment;
+
+        //
         public float maxForwardSpeed = 8f;          //플레이어 최고 이동 속도
         public float minTurnSpeed = 400f;           //플레이어 최저 회전 속도
         public float maxTurnSpeed = 1200f;          //플레이어 최고 회전 속도
@@ -46,7 +51,12 @@ namespace MySampleEx
         public CameraSettings cameraSettings;
 
         //공격
+        public MeeleWeapon meeleWeapon;
         protected bool m_InAttack;                  //공격 여부 판단
+        protected bool m_InCombo;                   //어택 상태 여부
+
+        //데미지
+        protected Damageable m_Damageable;          //Damageable 객체
 
         //상수
         const float k_GroundAcceleration = 20f;   //이동 가속도값
@@ -77,6 +87,10 @@ namespace MySampleEx
         readonly int m_HashLocomotion = Animator.StringToHash("Locomotion");
         readonly int m_HashAirborne = Animator.StringToHash("Airborne");
         readonly int m_HashLanding = Animator.StringToHash("Landing");
+        readonly int m_HashEllenCombo1 = Animator.StringToHash("EllenCombo1");
+        readonly int m_HashEllenCombo2 = Animator.StringToHash("EllenCombo2");
+        readonly int m_HashEllenCombo3 = Animator.StringToHash("EllenCombo3");
+        readonly int m_HashEllenCombo4 = Animator.StringToHash("EllenCombo4");
         #endregion
 
         private void Awake()
@@ -94,12 +108,29 @@ namespace MySampleEx
                 if (cameraSettings.lookAt == null)
                     cameraSettings.lookAt = this.transform.Find("HeadTarget");
             }
+
+            meeleWeapon.SetOwner(this.gameObject);
+        }
+
+        private void OnEnable()
+        {
+            m_Damageable = GetComponent<Damageable>();
+            m_Damageable.onDamageMessageReceviers.Add(this);
+            m_Damageable.IsInvulnerable = true;
+
+            EquipMeeleWeapon(false);
+        }
+
+        private void OnDisable()
+        {
+            m_Damageable.onDamageMessageReceviers.Remove(this);
         }
 
         private void FixedUpdate()
         {
             CacheAnimatorState();
 
+            EquipMeeleWeapon(IsWeaponEquiped());
             AttackState();
 
             CalculateForwardMovement();
@@ -132,7 +163,7 @@ namespace MySampleEx
             bool updateOrientationForAirbon = (!m_IsAnimatorTransitioning && m_CurrentStateInfo.shortNameHash == m_HashAirborne || m_NxetStateInfo.shortNameHash == m_HashAirborne);
             bool updateOrientationForLanding = (!m_IsAnimatorTransitioning && m_CurrentStateInfo.shortNameHash == m_HashLanding || m_NxetStateInfo.shortNameHash == m_HashLanding);
 
-            return updateOrientationForLocomotion || updateOrientationForAirbon || updateOrientationForLanding;
+            return updateOrientationForLocomotion || updateOrientationForAirbon || updateOrientationForLanding || m_InCombo && !m_InAttack;
         }
 
         //공격 처리
@@ -144,6 +175,41 @@ namespace MySampleEx
                 Mathf.Repeat(m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime, 1f));
             if (m_Input.Attack)
                 m_Animator.SetTrigger(m_HashMeleeAttack);
+        }
+
+        //무기를 사용하는 상태인지 - MeleeCombatSM 상태인지
+        bool IsWeaponEquiped()
+        {
+            bool equiped = m_NxetStateInfo.shortNameHash == m_HashEllenCombo1 || m_CurrentStateInfo.shortNameHash == m_HashEllenCombo1;
+            equiped |= m_NxetStateInfo.shortNameHash == m_HashEllenCombo2 || m_CurrentStateInfo.shortNameHash == m_HashEllenCombo2;
+            equiped |= m_NxetStateInfo.shortNameHash == m_HashEllenCombo3 || m_CurrentStateInfo.shortNameHash == m_HashEllenCombo3;
+            equiped |= m_NxetStateInfo.shortNameHash == m_HashEllenCombo4 || m_CurrentStateInfo.shortNameHash == m_HashEllenCombo4;
+
+            return equiped;
+        }
+
+        void EquipMeeleWeapon(bool equiped)
+        {
+            meeleWeapon.gameObject.SetActive(equiped);
+            m_InAttack = false;
+            m_InCombo = equiped;
+
+            if(equiped == false)
+            {
+                m_Animator.ResetTrigger(m_HashMeleeAttack);
+            }
+        }
+
+        public void MeleeAttackStart(int throwing = 0)
+        {
+            meeleWeapon.BeginAttack(throwing != 0);
+            m_InAttack = true;
+        }
+
+        public void MeleeAttackEnd()
+        {
+            meeleWeapon.EndAttack();
+            m_InAttack = false;
         }
 
         //(Forward)이동 속도 계산
@@ -329,5 +395,42 @@ namespace MySampleEx
             m_Animator.SetBool(m_HashGrounded, m_IsGrounded);
         }
 
+        //메세지 인터페이스 기능 구현
+        public void OnReceiveMessage(MessageType type, object sender, object msg)
+        {
+            switch (type)
+            {
+                case MessageType.Damaged:
+                    {
+                        Damageable.DamageMessage damageData = (Damageable.DamageMessage)msg;
+                        Damaged(damageData);
+                    }
+                    break;
+                case MessageType.Death:
+                    {
+                        Damageable.DamageMessage damageData = (Damageable.DamageMessage)msg;
+                    }
+                    break;
+            }
+        }
+
+        //데미지 처리, 애니메이션, 연출(vfx, sfx), ...
+        void Damaged(Damageable.DamageMessage damageMessage)
+        {
+            //TODO
+        }
+
+        //죽음 처리, 애니메이션, 연출(vfx, sfx), ...
+        void Die(Damageable.DamageMessage damageMessage)
+        {
+            //TODO
+        }
+
+        //
+        public bool PickupItem(ItemObject itemObject)
+        {
+            Item newItem = itemObject.CreateItem();
+            return inventory.AddItem(newItem, 1);
+        }
     }
 }
