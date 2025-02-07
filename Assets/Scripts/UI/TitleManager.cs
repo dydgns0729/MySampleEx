@@ -32,6 +32,7 @@ namespace MySampleEx
 
 #if FIREBASE_MODE
         private FirebaseAuthManager firebaseAuthManager;
+        private FirebaseDatabaseManager firebaseDatabaseManager;
 #endif
         #endregion
 
@@ -45,6 +46,9 @@ namespace MySampleEx
             firebaseAuthManager = FirebaseAuthManager.Instance;
             firebaseAuthManager.InitializeFirebase();
             firebaseAuthManager.OnChangedAuthState += OnNetUpdate;
+
+            firebaseDatabaseManager = FirebaseDatabaseManager.Instance;
+            firebaseDatabaseManager.OnChangedData += OnNetUpdate;
 #endif
         }
 
@@ -55,6 +59,7 @@ namespace MySampleEx
 #endif
 #if FIREBASE_MODE
             firebaseAuthManager.OnChangedAuthState -= OnNetUpdate;
+            firebaseDatabaseManager.OnChangedData -= OnNetUpdate;
 #endif
         }
 
@@ -109,6 +114,8 @@ namespace MySampleEx
                         netManager.NetSendUserInfo();
 #endif
 #if FIREBASE_MODE
+                        netManager.netMessage = NetMessage.UserInfo;
+                        firebaseDatabaseManager.OnLoad();
                         Debug.Log("로그인 성공 - 유저 정보 가져오기");
 #endif
 
@@ -128,6 +135,11 @@ namespace MySampleEx
                 case NetMessage.RegisterUser:
                     if (netResult == 0)         //회원가입 성공
                     {
+#if FIREBASE_MODE
+                        Debug.Log("유저 정보 저장하기");
+                        netManager.netMessage = NetMessage.None;
+                        firebaseDatabaseManager.OnChangedStatsInfo();
+#endif
                         ShowMessageUI("회원가입 성공");
                     }
                     else if (netResult == 1)    //아이디 중복

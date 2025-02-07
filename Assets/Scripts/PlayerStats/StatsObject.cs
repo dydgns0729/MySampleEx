@@ -242,6 +242,7 @@ namespace MySampleEx
                 NetManager.Instance.NetSendUserLevelUp();
 #else
                 Level++;
+                nowLevel++;
 #endif
                 //레벨업 보상
                 //...

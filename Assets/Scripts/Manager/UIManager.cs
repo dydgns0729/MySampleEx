@@ -1,4 +1,3 @@
-using MySample;
 using UnityEngine;
 
 namespace MySampleEx
@@ -9,7 +8,7 @@ namespace MySampleEx
         public ItemDataBase database;
         public InventoryObject inventory;
         public StatsObject playerStats;
-        
+
         public DynamicInventoryUI palyerInventoryUI;
         public StaticInventoryUI palyerEquipmentUI;
         public PlayerStatsUI playerStatsUI;
@@ -29,6 +28,8 @@ namespace MySampleEx
 
         private void Update()
         {
+
+#if !TOUCH_MODE
             if(Input.GetKeyDown(KeyCode.I))
             {
                 OpenPlayerInventoryUI();
@@ -49,6 +50,7 @@ namespace MySampleEx
             {
                 OpenShopUI();
             }
+#endif
 
         }
 
@@ -61,7 +63,7 @@ namespace MySampleEx
         {
             palyerInventoryUI.UpdateSelectSlot(null);
             Toggle(palyerInventoryUI.gameObject);
-            if(palyerInventoryUI.gameObject.activeSelf)
+            if (palyerInventoryUI.gameObject.activeSelf)
             {
                 palyerInventoryUI.OpenInventoryUI(ClosePlayerInventoryUI);
             }
@@ -95,7 +97,7 @@ namespace MySampleEx
             {
                 dialogUI.OnCloseDialog += OpenQuestUI;
             }
-            else if(npcType == NpcType.Merchant)
+            else if (npcType == NpcType.Merchant)
             {
                 dialogUI.OnCloseDialog += OpenShopUI;
             }
@@ -112,16 +114,16 @@ namespace MySampleEx
         public void OpenPlayerQuestUI()
         {
             Toggle(questUI.gameObject);
-            if(questUI.gameObject.activeSelf)
+            if (questUI.gameObject.activeSelf)
             {
                 questUI.OpenPlayerQuestUI(CloseQuestUI);
-            }   
+            }
         }
 
         //NPC 퀘스트 보기
         public void OpenQuestUI()
         {
-            Toggle(questUI.gameObject);            
+            Toggle(questUI.gameObject);
             questUI.OpenQuestUI(CloseQuestUI);
         }
 
@@ -134,7 +136,7 @@ namespace MySampleEx
         {
             shopUI.UpdateSelectSlot(null);
             Toggle(shopUI.gameObject);
-            if(shopUI.gameObject.activeSelf)
+            if (shopUI.gameObject.activeSelf)
             {
                 shopUI.OpenInventoryUI(CloseShopUI);
             }

@@ -25,6 +25,9 @@ namespace MySampleEx
             playerController = GameObject.FindAnyObjectByType<PlayerController>();
         }
 
+#if TOUCH_MODE
+        
+#else
         protected virtual void OnMouseOver()
         {
             distance = Vector3.Distance(transform.position, playerController.transform.position);
@@ -49,7 +52,7 @@ namespace MySampleEx
         {
             HiddenActionUI();
         }
-
+#endif
         protected virtual void ShowActionUI()
         {
             actionTextUI.gameObject.SetActive(true);
