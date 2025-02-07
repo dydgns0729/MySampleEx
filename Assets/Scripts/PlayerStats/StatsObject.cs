@@ -5,6 +5,18 @@ using static UnityEngine.Rendering.DebugUI;
 namespace MySampleEx
 {
     /// <summary>
+    /// 유저 게임 데이터 정의
+    /// </summary>
+    [Serializable]
+    public class UserData
+    {
+        public int level;
+        public int exp;
+        public int health;
+        public int mana;
+        public int gold;
+    }
+    /// <summary>
     /// 캐릭터 스탯 데이터를 가지고 있는 스크립터블 오브젝트
     /// </summary>
     [CreateAssetMenu(fileName = "new Stats", menuName = "Stats System/new Character Stats")]
@@ -13,34 +25,44 @@ namespace MySampleEx
         #region Variables
         public Attribute[] attributes;          //캐릭터 속성 값들
 
-        [SerializeField] private int level;
-        [SerializeField] private int exp;
-        [SerializeField] private int gold;
+        [SerializeField] private UserData userData;
 
         //스탯 변경시 등록된 함수 호출
         public Action<StatsObject> OnChagnedStats;
 
         public int Level
         {
-            get { return level; }
-            set { level = value; }
+            get { return userData.level; }
+            set { userData.level = value; }
         }
-        public int Exp => exp;
+        public int Exp
+        {
+            get => userData.exp;
+            set => userData.exp = value;
+        }
         public int Gold
         {
-            get { return gold; }
-            set { gold = value; }
+            get { return userData.gold; }
+            set { userData.gold = value; }
         }
 
-        public int Health { get; set; }
-        public int Mana { get; set; }
+        public int Health
+        {
+            get => userData.health;
+            set => userData.health = value;
+        }
 
-        public float HealthPercentage
+        public int Mana
+        {
+            get => userData.mana;
+            set => userData.mana = value;
+        }
+
+        public int MaxHealth
         {
             get
             {
-                int health = Health;
-                int maxHealth = health;
+                int maxHealth = 0;
 
                 foreach (var attribute in attributes)
                 {
@@ -49,16 +71,23 @@ namespace MySampleEx
                         maxHealth = attribute.value.ModifedValue;
                     }
                 }
-                return (maxHealth > 0) ? ((float)health / (float)maxHealth) : 0f;
+                return maxHealth;
             }
         }
 
-        public float ManaPercentage
+        public float HealthPercentage
         {
             get
             {
-                int mana = Mana;
-                int maxMana = mana;
+                return (MaxHealth > 0) ? ((float)Health / (float)MaxHealth) : 0f;
+            }
+        }
+
+        public int MaxMana
+        {
+            get
+            {
+                int maxMana = 0;
 
                 foreach (var attribute in attributes)
                 {
@@ -67,7 +96,15 @@ namespace MySampleEx
                         maxMana = attribute.value.ModifedValue;
                     }
                 }
-                return (maxMana > 0) ? ((float)mana / (float)maxMana) : 0f;
+                return maxMana;
+            }
+        }
+
+        public float ManaPercentage
+        {
+            get
+            {
+                return (MaxMana > 0) ? ((float)Mana / (float)MaxMana) : 0f;
             }
         }
 
@@ -95,10 +132,6 @@ namespace MySampleEx
                 attribute.value = new ModifiableInt(OnModifiedValue);
             }
 
-            level = 1;
-            exp = 0;
-            gold = 1000;
-
             SetBaseValue(CharacterAttribute.Agility, 100);
             SetBaseValue(CharacterAttribute.Intellect, 100);
             SetBaseValue(CharacterAttribute.Stamina, 100);
@@ -106,6 +139,9 @@ namespace MySampleEx
             SetBaseValue(CharacterAttribute.Health, 100);
             SetBaseValue(CharacterAttribute.Mana, 100);
 
+            Level = 1;
+            Exp = 0;
+            Gold = 1000;
             //Current Health, Mana 초기화
             Health = GetModifiredValue(CharacterAttribute.Health);
             Mana = GetModifiredValue(CharacterAttribute.Mana);
@@ -160,7 +196,7 @@ namespace MySampleEx
 
         public void AddGold(int amount)
         {
-            gold += amount;
+            Gold += amount;
             Debug.Log("AddGold: " + amount.ToString());
 
             //스탯 변경시 등록된 함수 호출
@@ -169,13 +205,13 @@ namespace MySampleEx
 
         public bool UseGold(int amount)
         {
-            if (gold < amount)
+            if (Gold < amount)
             {
                 Debug.Log("소지금 부족");
                 return false;
             }
 
-            gold -= amount;
+            Gold -= amount;
 
             //스탯 변경시 등록된 함수 호출
             OnChagnedStats?.Invoke(this);
@@ -186,21 +222,27 @@ namespace MySampleEx
         //소지금 체크
         public bool EnoughGold(int amount)
         {
-            return gold >= amount;
+            return Gold >= amount;
         }
 
         public bool AddExp(int amount)
         {
             bool isLevelup = false;
 
-            exp += amount;
+            Exp += amount;
+
+            int nowLevel = Level;
 
             //레벨업 체크
-            while (exp >= GetExpForLevelup(level))
+            while (Exp >= GetExpForLevelup(nowLevel))
             {
-                exp -= GetExpForLevelup(level);
-                level++;
-
+                Exp -= GetExpForLevelup(nowLevel);
+#if NET_MODE
+                nowLevel++;
+                NetManager.Instance.NetSendUserLevelUp();
+#else
+                Level++;
+#endif
                 //레벨업 보상
                 //...
 
@@ -218,5 +260,17 @@ namespace MySampleEx
         {
             return nowLevel * 100;
         }
+
+        #region SaveLoad
+        public string ToJson()
+        {
+            return JsonUtility.ToJson(userData);
+        }
+
+        public void FromJson(string jsonString)
+        {
+            userData = JsonUtility.FromJson<UserData>(jsonString);
+        }
+        #endregion
     }
 }

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "818888810792",
+    "firebase_url": "https://mysampleex-e592c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "mysampleex-e592c",
+    "storage_bucket": "mysampleex-e592c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:818888810792:android:e2596f7f145d5b9f36701d",
+        "android_client_info": {
+          "package_name": "com.dydgns0729.MySampleEx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBs7qzpoE3_iFiRXtC7X1pa1dulgKrxRbY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

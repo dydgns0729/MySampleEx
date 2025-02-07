@@ -31,7 +31,7 @@ namespace MySampleEx
                 int count = 0;
                 foreach (var slot in Slots)
                 {
-                    if(slot.item.id <= -1)
+                    if (slot.item.id <= -1)
                     {
                         count++;
                     }
@@ -48,7 +48,7 @@ namespace MySampleEx
             if (!database.itemObjects[item.id].stackable || slot == null)
             {
                 //인벤풀 체크
-                if(EmptySlotCount <= 0)
+                if (EmptySlotCount <= 0)
                 {
                     Debug.Log("Inven Full");
                     return false;
@@ -96,7 +96,7 @@ namespace MySampleEx
                 return;
             }
 
-            if(itemB.CanPlaceInSlot(itemA.ItemObject) && itemA.CanPlaceInSlot(itemB.ItemObject))
+            if (itemB.CanPlaceInSlot(itemA.ItemObject) && itemA.CanPlaceInSlot(itemB.ItemObject))
             {
                 ItemSlot temp = new ItemSlot(itemB.item, itemB.amount);
                 itemB.UpdateSlot(itemA.item, itemA.amount);
@@ -108,14 +108,14 @@ namespace MySampleEx
         public void UseItem(ItemSlot useSlot)
         {
             //아이템 체크
-            if (useSlot.ItemObject == null || useSlot.item.id <= -1 
+            if (useSlot.ItemObject == null || useSlot.item.id <= -1
                 || useSlot.amount <= 0)
             {
                 return;
             }
 
             ItemObject itemObject = useSlot.ItemObject;
-            useSlot.UpdateSlot(useSlot.item, useSlot.amount-1);
+            useSlot.UpdateSlot(useSlot.item, useSlot.amount - 1);
 
             OnUseItem?.Invoke(itemObject);
         }
@@ -123,6 +123,18 @@ namespace MySampleEx
         //인벤토리 데이터 저장하기, 불러오기
         #region Save/Load Methods
         public string savePath = "/Inventory.json";
+
+        #region SaveLoad
+        public string ToJson()
+        {
+            return JsonUtility.ToJson(container);
+        }
+
+        public void FromJson(string jsonString)
+        {
+            container = JsonUtility.FromJson<Inventory>(jsonString);
+        }
+        #endregion
 
         [ContextMenu("Save")]
         public void Save()

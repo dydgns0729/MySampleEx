@@ -29,27 +29,43 @@ namespace MySampleEx
 #if AD_MODE
     private AdManager adManager;
 #endif
+
+#if FIREBASE_MODE
+        private FirebaseAuthManager firebaseAuthManager;
+#endif
         #endregion
 
         private void OnEnable()
         {
             netManager = NetManager.Instance;
+#if NET_MODE
             netManager.OnNetUpdate += OnNetUpdate;
+#endif
+#if FIREBASE_MODE
+            firebaseAuthManager = FirebaseAuthManager.Instance;
+            firebaseAuthManager.InitializeFirebase();
+            firebaseAuthManager.OnChangedAuthState += OnNetUpdate;
+#endif
         }
 
         private void OnDisable()
         {
+#if NET_MODE
             netManager.OnNetUpdate -= OnNetUpdate;
+#endif
+#if FIREBASE_MODE
+            firebaseAuthManager.OnChangedAuthState -= OnNetUpdate;
+#endif
         }
 
         private void Start()
         {
             //참조
-#if NET_MODE
+#if NET_MODE || FIREBASE_MODE
             ShowLogin();
 #endif
 #if AD_MODE
-        adManager = AdManager.Instance;
+            adManager = AdManager.Instance;
 #endif
         }
 
@@ -89,8 +105,14 @@ namespace MySampleEx
                 case NetMessage.Login:
                     if (netResult == 0)         //로그인 성공
                     {
-                        Debug.Log("로그인 성공 - 유저 정보 가져오기");
+#if NET_MODE
                         netManager.NetSendUserInfo();
+#endif
+#if FIREBASE_MODE
+                        Debug.Log("로그인 성공 - 유저 정보 가져오기");
+#endif
+
+
                     }
                     else if (netResult == 1)    //로그인 실패 : 아이디가 없다
                     {
@@ -202,7 +224,13 @@ namespace MySampleEx
                 Debug.Log("아이디 또는 비밀번호 형식이 잘못되었습니다람쥐");
                 return;
             }
+#if NET_MODE
             netManager.NetSendLogin(loginId.text, loginPw.text);
+#endif
+#if FIREBASE_MODE
+            netManager.netMessage = NetMessage.Login;
+            firebaseAuthManager.SignIn(loginId.text, loginPw.text);
+#endif
             ResetLoginUI();
         }
 
@@ -213,9 +241,15 @@ namespace MySampleEx
                 Debug.Log("아이디 또는 비밀번호 형식이 잘못되었습니다람쥐");
                 return;
             }
-
+#if NET_MODE
             netManager.NetSendUserRegister(loginId.text, loginPw.text);
+#endif
+#if FIREBASE_MODE
+            netManager.netMessage = NetMessage.RegisterUser;
+            firebaseAuthManager.CreateUser(loginId.text, loginPw.text);
+#endif
             ResetLoginUI();
+
         }
 
     }

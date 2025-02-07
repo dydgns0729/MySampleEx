@@ -93,6 +93,8 @@ namespace MySampleEx
                         NetSendUserInfoResult(infoResult);
                         break;
                     case NetMessage.LevelUp:
+                        UserLevelUpResult levelUpResult = JsonUtility.FromJson<UserLevelUpResult>(pData);
+                        NetSendUserLevelUpResult(levelUpResult);
                         break;
                 }
                 OnNetUpdate?.Invoke(netResult);
@@ -221,6 +223,42 @@ namespace MySampleEx
             {
                 netFail = true;
                 Debug.Log("유저정보 가져오기 실패");
+            }
+        }
+
+        //유저 레벨업 요청
+        public void NetSendUserLevelUp()
+        {
+            //네트워크 상태 설정
+            SetNetMessage(NetMessage.LevelUp);
+
+            //보내는 메세지 가공
+            UserLevelUp levelup = new UserLevelUp();
+            levelup.protocol = (int)netMessage;
+            levelup.userId = userId;
+
+            string json = JsonUtility.ToJson(levelup);
+
+            //요청
+            string requestURL = serverURL + "/api/UserLevelUpServices";
+
+            POST(requestURL, json, ReciveResult);
+        }
+
+        //유저 레벨업 응답
+        public void NetSendUserLevelUpResult(UserLevelUpResult levelUpResult)
+        {
+            netResult = levelUpResult.result;
+            if (netResult == 0)         //레벨업 성공
+            {
+                Debug.Log("레벨업 성공");
+                playerStats.Level = levelUpResult.level;
+                playerStats.OnChagnedStats?.Invoke(playerStats);
+            }
+            else if (netResult == 1)    //레벨업 실패
+            {
+                netFail = true;
+                Debug.Log("레벨업 실패");
             }
         }
     }
