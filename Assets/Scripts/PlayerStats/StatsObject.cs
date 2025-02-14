@@ -16,6 +16,7 @@ namespace MySampleEx
         public int mana;
         public int gold;
     }
+
     /// <summary>
     /// 캐릭터 스탯 데이터를 가지고 있는 스크립터블 오브젝트
     /// </summary>
@@ -32,23 +33,25 @@ namespace MySampleEx
 
         public int Level
         {
-            get { return userData.level; }
-            set { userData.level = value; }
+            get => userData.level;
+            set => userData.level = value;
         }
+
         public int Exp
         {
             get => userData.exp;
             set => userData.exp = value;
         }
+
         public int Gold
         {
-            get { return userData.gold; }
-            set { userData.gold = value; }
+            get => userData.gold;
+            set => userData.gold = value;
         }
 
         public int Health
         {
-            get => userData.health;
+            get =>userData.health;
             set => userData.health = value;
         }
 
@@ -63,7 +66,6 @@ namespace MySampleEx
             get
             {
                 int maxHealth = 0;
-
                 foreach (var attribute in attributes)
                 {
                     if (attribute.type == CharacterAttribute.Health)
@@ -88,7 +90,6 @@ namespace MySampleEx
             get
             {
                 int maxMana = 0;
-
                 foreach (var attribute in attributes)
                 {
                     if (attribute.type == CharacterAttribute.Mana)
@@ -125,7 +126,7 @@ namespace MySampleEx
 
             isInitailized = true;
             Debug.Log("Initialize Attributes");
-
+                        
             foreach (var attribute in attributes)
             {
                 //attribute의 value 객체 생성    
@@ -234,16 +235,17 @@ namespace MySampleEx
             int nowLevel = Level;
 
             //레벨업 체크
-            while (Exp >= GetExpForLevelup(nowLevel))
+            while(Exp >= GetExpForLevelup(nowLevel))
             {
                 Exp -= GetExpForLevelup(nowLevel);
 #if NET_MODE
                 nowLevel++;
-                NetManager.Instance.NetSendUserLevelUp();
+                NetManager.Instance.NetSendUserLevelup();
 #else
                 Level++;
                 nowLevel++;
 #endif
+
                 //레벨업 보상
                 //...
 
@@ -262,7 +264,7 @@ namespace MySampleEx
             return nowLevel * 100;
         }
 
-        #region SaveLoad
+        #region Save/Load Methods
         public string ToJson()
         {
             return JsonUtility.ToJson(userData);

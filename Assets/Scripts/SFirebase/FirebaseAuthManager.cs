@@ -1,7 +1,8 @@
-using Firebase.Auth;
 using System;
-using Firebase;
 using UnityEngine;
+using Firebase;
+using Firebase.Auth;
+
 
 namespace MySampleEx
 {
@@ -12,11 +13,12 @@ namespace MySampleEx
     {
         #region Singleton
         private static FirebaseAuthManager instance = null;
+
         public static FirebaseAuthManager Instance
         {
             get
             {
-                if (instance == null)
+                if(instance == null)
                 {
                     instance = new FirebaseAuthManager();
                 }
@@ -43,64 +45,63 @@ namespace MySampleEx
             OnAuthStateChanged(this, null);
         }
 
-        //Firebase 계정 생성
-        public async void CreateUser(string id, string pw)
+        //Firebase 계성 생성(email, password)
+        public async void CreateUser(string email, string password)
         {
             int result = 0;
 
-            await auth.CreateUserWithEmailAndPasswordAsync(id, pw).ContinueWith(task =>
+            await auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
             {
-                //취소했는지 확인
-                if (task.IsCanceled)
+                if(task.IsCanceled)
                 {
                     Debug.Log("CreateUserWithEmailAndPasswordAsync was canceled");
                     result = 2;
                     return;
                 }
-                //실패했는지 확인
                 if (task.IsFaulted)
                 {
                     int errorCode = GetFirebaseErrorCode(task.Exception);
                     result = (errorCode == (int)Firebase.Auth.AuthError.EmailAlreadyInUse) ? 1 : 2;
-                    Debug.LogError($"CreateUserWithEmailAndPasswordAsync was Faulted / Error : {task.Exception}");
+                    Debug.LogError($"CreateUserWithEmailAndPasswordAsync error: {task.Exception}");
                     return;
                 }
+
                 //계정 생성 성공
                 Firebase.Auth.AuthResult authResult = task.Result;
-                Debug.Log($"Firebase user create success : {authResult.User.DisplayName}, {authResult.User.UserId}");
+                Debug.Log($"Firebase user create success: {authResult.User.DisplayName}, {authResult.User.UserId}");
             });
 
             OnChangedAuthState?.Invoke(result);
         }
 
-        //Firebase Auth 계정 로그인
-        public async void SignIn(string id, string pw)
+        //Firebase Auth 로그인(email, password)
+        public async void SignIn(string email, string password)
         {
             int result = 0;
 
-            await auth.SignInWithEmailAndPasswordAsync(id, pw).ContinueWith(task =>
+            await auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
             {
-                //취소했는지 확인
                 if (task.IsCanceled)
                 {
                     Debug.Log("SignInWithEmailAndPasswordAsync was canceled");
                     result = 2;
                     return;
                 }
-                //실패했는지 확인
                 if (task.IsFaulted)
                 {
                     int errorCode = GetFirebaseErrorCode(task.Exception);
-                    switch (errorCode)
+                    switch(errorCode)
                     {
                         case (int)Firebase.Auth.AuthError.EmailAlreadyInUse:
-                            Debug.LogError("EmailAlreadyInUse");
+                            Debug.LogError($"Email Already Use");
                             result = 2;
                             break;
+
                         case (int)Firebase.Auth.AuthError.WrongPassword:
-                            Debug.LogError("WrongPassword");
+                            Debug.LogError($"WrongPassword");
                             result = 1;
                             break;
+
                         default:
                             result = 2;
                             break;
@@ -110,13 +111,13 @@ namespace MySampleEx
 
                 //계정 생성 성공
                 Firebase.Auth.AuthResult authResult = task.Result;
-                Debug.Log($"User Signed in success : {authResult.User.DisplayName}, {authResult.User.UserId}");
+                Debug.Log($"user signed in success: {authResult.User.DisplayName}, {authResult.User.UserId}");
             });
 
             OnChangedAuthState?.Invoke(result);
         }
 
-        //Firebase Auth 계정 로그아웃
+        //Firebase Auth 로그아웃
         public void SignOut()
         {
             auth.SignOut();
@@ -129,7 +130,7 @@ namespace MySampleEx
             foreach (Exception ex in exception.Flatten().InnerExceptions)
             {
                 firebaseException = ex as FirebaseException;
-                if (firebaseException != null)
+                if(firebaseException != null)
                 {
                     break;
                 }
@@ -137,22 +138,22 @@ namespace MySampleEx
             return firebaseException?.ErrorCode ?? 0;
         }
 
-        private void OnAuthStateChanged(object sender, EventArgs e)
+        private void OnAuthStateChanged(object sender, EventArgs eventArgs)
         {
-            if (auth.CurrentUser != null)
+            if(auth.CurrentUser != user)
             {
                 bool signedIn = (user != auth.CurrentUser && auth.CurrentUser != null);
                 if (!signedIn && user != null)
                 {
-                    Debug.Log($"Signed Out : {user.UserId}");
-                    //EX : OnChangedAuthState?.Invoke(-1);
+                    Debug.Log($"Signed Out: {user.UserId}");
+                    //OnChangedAuthState?.Invoke(0);
                 }
 
                 user = auth.CurrentUser;
                 if (signedIn)
                 {
-                    Debug.Log($"Signed In : {user.UserId}");
-                    //EX : OnChangedAuthState?.Invoke(0);
+                    Debug.Log($"Signed In: {user.UserId}");
+                    //OnChangedAuthState?.Invoke(0);
                 }
             }
         }

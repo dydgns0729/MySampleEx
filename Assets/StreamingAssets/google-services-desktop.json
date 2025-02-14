@@ -1,22 +1,22 @@
 {
   "project_info": {
-    "project_number": "818888810792",
-    "firebase_url": "https://mysampleex-e592c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "mysampleex-e592c",
-    "storage_bucket": "mysampleex-e592c.firebasestorage.app"
+    "project_number": "403910320323",
+    "firebase_url": "https://mysampleex-33549-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "mysampleex-33549",
+    "storage_bucket": "mysampleex-33549.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:818888810792:android:e2596f7f145d5b9f36701d",
+        "mobilesdk_app_id": "1:403910320323:android:b938f7d99e89f0d87ac276",
         "android_client_info": {
-          "package_name": "com.dydgns0729.MySampleEx"
+          "package_name": "com.ee2ssam.MySampleEx"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBs7qzpoE3_iFiRXtC7X1pa1dulgKrxRbY"
+          "current_key": "AIzaSyBP2DZcyUzFvZDZaK5A672I8Seeqy_bUtY"
         }
       ],
       "services": {

@@ -1,8 +1,8 @@
 using UnityEngine;
-using System.Collections.Generic;
 using System.Collections;
-using System.IO;
+using System.Collections.Generic;
 using System.Net;
+using System.IO;
 using System.Text;
 using System;
 
@@ -11,15 +11,15 @@ namespace MySampleEx
     public class NetManager : PersistentSingleton<NetManager>
     {
         #region Variables
-        //서버 URL(Dev, Live)
+        //서버 URL (dev,live)
 #if LIVE_MODE
-        private string serverURL = "http://192.168.101.163:6001";       //Live Server
+        private string serverURL = "http://192.168.101.154:6001";       //Live 서버
 #else
-        private string serverURL = "http://192.168.101.163:6001";       //Dev Server
+        private string serverURL = "http://192.168.101.154:6001";       //Dev 서버
 #endif
         //Http Post 호출
         Dictionary<HttpWebRequest, object> mRequestDatas = new Dictionary<HttpWebRequest, object>();
-        public delegate void WWWRequestFinished(string pSuccess, string pData);
+        public delegate void WWWRequestFinished(string pSuccess, string pDatat);
 
         //Net State 관리
         public NetMessage netMessage = NetMessage.None;
@@ -63,6 +63,7 @@ namespace MySampleEx
 
             string aSuccess = "success";
 
+            //응답처리
             HttpWebResponse httpWebResponse;
             using (httpWebResponse = (HttpWebResponse)pWww.GetResponse())
             {
@@ -74,29 +75,34 @@ namespace MySampleEx
             }
         }
 
+        //응답 결과 처리
         private void ReciveResult(string pSuccess, string pData)
         {
             if (pSuccess.Equals("success"))
             {
-                switch (netMessage)
+                switch(netMessage)
                 {
                     case NetMessage.Login:
                         UserLoginResult loginResult = JsonUtility.FromJson<UserLoginResult>(pData);
                         NetSendLoginResult(loginResult);
                         break;
+
                     case NetMessage.RegisterUser:
                         UserRegisterResult registerResult = JsonUtility.FromJson<UserRegisterResult>(pData);
                         NetSendUserRegisterResult(registerResult);
                         break;
+
                     case NetMessage.UserInfo:
                         UserInfoResult infoResult = JsonUtility.FromJson<UserInfoResult>(pData);
                         NetSendUserInfoResult(infoResult);
                         break;
-                    case NetMessage.LevelUp:
-                        UserLevelUpResult levelUpResult = JsonUtility.FromJson<UserLevelUpResult>(pData);
-                        NetSendUserLevelUpResult(levelUpResult);
+
+                    case NetMessage.Levelup:
+                        UserLevelupResult levelupResult = JsonUtility.FromJson<UserLevelupResult>(pData);
+                        NetSendUserLevelupResult(levelupResult);
                         break;
                 }
+
                 OnNetUpdate?.Invoke(netResult);
             }
         }
@@ -107,44 +113,40 @@ namespace MySampleEx
             netMessage = message;
             netFail = false;
             //netError = "";
-            netResult = -1;
         }
 
-
-        //로그인요청
+        //로그인 요청
         public void NetSendLogin(string id, string password)
         {
             //네트워크 상태 설정
             SetNetMessage(NetMessage.Login);
 
-
             //보내는 메세지 가공
             UserLogin userLogin = new UserLogin();
             userLogin.protocol = (int)netMessage;
             userLogin.userId = id;
-            userLogin.passWord = password;
-
+            userLogin.password = password;
             string json = JsonUtility.ToJson(userLogin);
 
             //요청
-            string requestURL = serverURL + "/api/UserLoginServices";
-
-            POST(requestURL, json, ReciveResult);
+            string requestUrl = serverURL + "/api/UserLoginServices";
+            //Debug.Log($"userLogin: {json}");
+            POST(requestUrl, json, ReciveResult);
         }
 
         private void NetSendLoginResult(UserLoginResult loginResult)
         {
             netResult = loginResult.result;
-            if (netResult == 0)  //로그인 성공
+            if (netResult == 0) //로그인 성공
             {
                 Debug.Log("로그인 성공");
                 userId = loginResult.userId;
             }
-            else if (netResult == 1)   //로그인 실패 : 아이디가 없다
+            else if (netResult == 1)   //아이디가 없다
             {
-                Debug.Log("로그인 실패 : 아이디가 없습니다");
+                Debug.Log("로그인 아이디가 없습니다");
             }
-            else                                //로그인 실패 : 다른 이유
+            else    //로그인 실패
             {
                 netFail = true;
                 Debug.Log("로그인 실패");
@@ -161,32 +163,31 @@ namespace MySampleEx
             UserRegister userRegister = new UserRegister();
             userRegister.protocol = (int)netMessage;
             userRegister.userId = id;
-            userRegister.passWord = password;
-
+            userRegister.password = password;
             string json = JsonUtility.ToJson(userRegister);
 
             //요청
-            string requestURL = serverURL + "/api/UserAddServices";
-
-            POST(requestURL, json, ReciveResult);
+            string requestUrl = serverURL + "/api/UserAddServices";
+            //Debug.Log($"userLogin: {json}");
+            POST(requestUrl, json, ReciveResult);
         }
 
         //유저 등록 응답
         public void NetSendUserRegisterResult(UserRegisterResult registerResult)
         {
             netResult = registerResult.result;
-            if (netResult == 0)         //회원가입 성공
+            if (netResult == 0) //유저 등록 성공
             {
-                Debug.Log("회원가입 성공");
+                Debug.Log("유저 등록 성공");
             }
-            else if (netResult == 1)    //아이디 중복
+            else if (netResult == 1)   //아이디 중복
             {
-                Debug.Log("회원가입 실패 : 중복 아이디");
+                Debug.Log("중복된 아이디 입니다");
             }
-            else                        //회원가입 실패 : 다른 이유
+            else    //로그인 실패
             {
                 netFail = true;
-                Debug.Log("회원가입 실패");
+                Debug.Log("등록 실패");
             }
         }
 
@@ -200,66 +201,65 @@ namespace MySampleEx
             UserInfo userInfo = new UserInfo();
             userInfo.protocol = (int)netMessage;
             userInfo.userId = userId;
-
             string json = JsonUtility.ToJson(userInfo);
 
             //요청
-            string requestURL = serverURL + "/api/UserInfoServices";
-
-            POST(requestURL, json, ReciveResult);
+            string requestUrl = serverURL + "/api/UserInfoServices";
+            //Debug.Log($"userLogin: {json}");
+            POST(requestUrl, json, ReciveResult);
         }
 
         //유저 정보 가져오기 응답
         public void NetSendUserInfoResult(UserInfoResult infoResult)
         {
             netResult = infoResult.result;
-            if (netResult == 0)         //가져오기 성공
+            if (netResult == 0) //가져오기 성공
             {
-                Debug.Log("유저정보 가져오기 성공");
+                Debug.Log("가져오기 성공");
                 playerStats.Level = infoResult.level;
                 playerStats.Gold = infoResult.gold;
             }
-            else if (netResult == 1)    //아이디 중복
+            else    //가져오기 실패
             {
                 netFail = true;
-                Debug.Log("유저정보 가져오기 실패");
+                Debug.Log("가져오기 실패");
             }
         }
 
         //유저 레벨업 요청
-        public void NetSendUserLevelUp()
+        public void NetSendUserLevelup()
         {
             //네트워크 상태 설정
-            SetNetMessage(NetMessage.LevelUp);
+            SetNetMessage(NetMessage.Levelup);
 
             //보내는 메세지 가공
-            UserLevelUp levelup = new UserLevelUp();
+            UserLevelup levelup = new UserLevelup();
             levelup.protocol = (int)netMessage;
             levelup.userId = userId;
-
             string json = JsonUtility.ToJson(levelup);
 
             //요청
-            string requestURL = serverURL + "/api/UserLevelUpServices";
-
-            POST(requestURL, json, ReciveResult);
+            string requestUrl = serverURL + "/api/UserLevelupServices";
+            //Debug.Log($"userLogin: {json}");
+            POST(requestUrl, json, ReciveResult);
         }
 
         //유저 레벨업 응답
-        public void NetSendUserLevelUpResult(UserLevelUpResult levelUpResult)
+        public void NetSendUserLevelupResult(UserLevelupResult levelupResult)
         {
-            netResult = levelUpResult.result;
-            if (netResult == 0)         //레벨업 성공
+            netResult = levelupResult.result;
+            if (netResult == 0) //레벨업 성공
             {
                 Debug.Log("레벨업 성공");
-                playerStats.Level = levelUpResult.level;
+                playerStats.Level = levelupResult.level;
                 playerStats.OnChagnedStats?.Invoke(playerStats);
             }
-            else if (netResult == 1)    //레벨업 실패
+            else    //레벨업 실패
             {
                 netFail = true;
                 Debug.Log("레벨업 실패");
             }
         }
+
     }
 }

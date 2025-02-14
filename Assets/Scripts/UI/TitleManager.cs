@@ -1,8 +1,7 @@
-using System;
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 namespace MySampleEx
 {
@@ -16,24 +15,25 @@ namespace MySampleEx
         public GameObject loginMenu;
         public GameObject loginUI;
         public GameObject messageUI;
-
         public GameObject loginButton;
         public GameObject newButton;
 
         public TMP_InputField loginId;
-        public TMP_InputField loginPw;
+        public TMP_InputField password;
 
         public TextMeshProUGUI message;
 
-        public NetManager netManager;
+        private NetManager netManager;
+
 #if AD_MODE
-    private AdManager adManager;
+        private AdManager adManager;
 #endif
 
 #if FIREBASE_MODE
         private FirebaseAuthManager firebaseAuthManager;
         private FirebaseDatabaseManager firebaseDatabaseManager;
 #endif
+
         #endregion
 
         private void OnEnable()
@@ -48,7 +48,7 @@ namespace MySampleEx
             firebaseAuthManager.OnChangedAuthState += OnNetUpdate;
 
             firebaseDatabaseManager = FirebaseDatabaseManager.Instance;
-            firebaseDatabaseManager.OnChangedData += OnNetUpdate;
+            firebaseDatabaseManager.OnChangeData += OnNetUpdate;
 #endif
         }
 
@@ -59,7 +59,7 @@ namespace MySampleEx
 #endif
 #if FIREBASE_MODE
             firebaseAuthManager.OnChangedAuthState -= OnNetUpdate;
-            firebaseDatabaseManager.OnChangedData -= OnNetUpdate;
+            firebaseDatabaseManager.OnChangeData -= OnNetUpdate;
 #endif
         }
 
@@ -69,6 +69,7 @@ namespace MySampleEx
 #if NET_MODE || FIREBASE_MODE
             ShowLogin();
 #endif
+
 #if AD_MODE
             adManager = AdManager.Instance;
 #endif
@@ -77,7 +78,7 @@ namespace MySampleEx
         public void StartPlay()
         {
 #if AD_MODE
-        adManager.HideBanner();
+            adManager.HideBanner();
 #endif
             SceneManager.LoadScene("PlayScene");
         }
@@ -85,11 +86,10 @@ namespace MySampleEx
         public void ShowOption()
         {
 #if AD_MODE
-        adManager.HideBanner();
-        adManager.ShowInterstitialAd();
-#endif
+            adManager.HideBanner();
+            adManager.ShowInterstitialAd();
             //adManager.ShowRewardAd();
-
+#endif
             mainMenu.SetActive(false);
             option.SetActive(true);
         }
@@ -97,77 +97,90 @@ namespace MySampleEx
         public void HideOption()
         {
 #if AD_MODE
-        adManager.ShowBanner();
+            adManager.ShowBanner();
 #endif
             option.SetActive(false);
             mainMenu.SetActive(true);
         }
 
+
         public void OnNetUpdate(int netResult)
         {
-            switch (netManager.netMessage)
+            switch(netManager.netMessage)
             {
                 case NetMessage.Login:
-                    if (netResult == 0)         //로그인 성공
+                    if (netResult == 0) //로그인 성공
                     {
+                        //로그인 성공 - 유저 정보 가져오기
 #if NET_MODE
                         netManager.NetSendUserInfo();
 #endif
 #if FIREBASE_MODE
                         netManager.netMessage = NetMessage.UserInfo;
                         firebaseDatabaseManager.OnLoad();
-                        Debug.Log("로그인 성공 - 유저 정보 가져오기");
 #endif
 
-
                     }
-                    else if (netResult == 1)    //로그인 실패 : 아이디가 없다
+                    else if (netResult == 1)   //아이디가 없다
                     {
                         //경고창 띄우기
-                        ShowMessageUI("로그인 실패 : 아이디가 없습니다");
+                        ShowMessageUI("유저 아이디가 없습니다");
                     }
-                    else                        //로그인 실패 : 다른 이유
+                    else    //로그인 실패
                     {
                         //경고창 띄우기
                         ShowMessageUI("네트워크가 불안정 합니다. 다시 실행해주세요");
                     }
                     break;
+
                 case NetMessage.RegisterUser:
-                    if (netResult == 0)         //회원가입 성공
+                    if (netResult == 0) //유저 등록 성공
                     {
 #if FIREBASE_MODE
-                        Debug.Log("유저 정보 저장하기");
+                        Debug.Log("유저 정보 저장하기"); //UI에서 결과 처리안한다
                         netManager.netMessage = NetMessage.None;
-                        firebaseDatabaseManager.OnChangedStatsInfo();
+                        firebaseDatabaseManager.OnChangedStats();
 #endif
-                        ShowMessageUI("회원가입 성공");
+                        ShowMessageUI("유저 등록에 성공 했습니다");
                     }
-                    else if (netResult == 1)    //아이디 중복
+                    else if (netResult == 1)   //아이디 중복
                     {
-                        ShowMessageUI("회원가입 실패 : 중복 아이디");
+                        ShowMessageUI("중복된 아이디 입니다");
                     }
-                    else                        //회원가입 실패 : 다른 이유
+                    else    //로그인 실패
                     {
                         ShowMessageUI("네트워크가 불안정 합니다. 다시 실행해주세요");
                     }
                     break;
+
                 case NetMessage.UserInfo:
-                    if (netResult == 0)         //가져오기 성공
+                    if (netResult == 0) //가져오기 성공
                     {
-                        Debug.Log("유저정보 가져오기 성공");
                         ShowMainMenu();
                     }
-                    else                        //아이디 중복
+                    else    //가져오기 실패
                     {
                         ShowMessageUI("네트워크가 불안정 합니다. 다시 실행해주세요");
                     }
-                    break;
-                case NetMessage.LevelUp:
                     break;
             }
         }
 
-        private void ResetLoginUI()
+
+        public void ShowLogin()
+        {
+            mainMenu.SetActive(false);
+            login.SetActive(true);
+            ShowLoingMenu();
+        }
+
+        public void ShowMainMenu()
+        {
+            login.SetActive(false);
+            mainMenu.SetActive(true);
+        }
+
+        void ResetLoginUI()
         {
             loginMenu.SetActive(false);
             loginUI.SetActive(false);
@@ -177,22 +190,9 @@ namespace MySampleEx
             message.text = "";
         }
 
-        public void ShowLogin()
+        public void ShowLoingMenu()
         {
             ResetLoginUI();
-            mainMenu.SetActive(false); //false
-            login.SetActive(true);
-            ShowLoginMenu();
-        }
-
-        public void ShowMainMenu()
-        {
-            login.SetActive(false);
-            mainMenu.SetActive(true);
-        }
-
-        public void ShowLoginMenu()
-        {
             loginMenu.SetActive(true);
         }
 
@@ -224,44 +224,50 @@ namespace MySampleEx
                 Application.Quit();
                 return;
             }
-            ShowLoginMenu();
-            messageUI.SetActive(false);
-            message.text = "";
+
+            ShowLoingMenu();
         }
 
         public void Login()
         {
-            if (loginId.text.Length < 8 || loginId.text.Length > 20 || loginPw.text.Length < 7 || loginPw.text.Length > 20)
+            if(loginId.text.Length < 8 || loginId.text.Length > 20)
             {
-                Debug.Log("아이디 또는 비밀번호 형식이 잘못되었습니다람쥐");
                 return;
             }
+            if (password.text.Length < 8 || password.text.Length > 20)
+            {
+                return;
+            }
+
 #if NET_MODE
-            netManager.NetSendLogin(loginId.text, loginPw.text);
+            netManager.NetSendLogin(loginId.text, password.text);
 #endif
 #if FIREBASE_MODE
             netManager.netMessage = NetMessage.Login;
-            firebaseAuthManager.SignIn(loginId.text, loginPw.text);
-#endif
+            firebaseAuthManager.SignIn(loginId.text, password.text);
+#endif            
             ResetLoginUI();
         }
 
         public void RegisterUser()
         {
-            if (loginId.text.Length < 8 || loginId.text.Length > 20 || loginPw.text.Length < 8 || loginPw.text.Length > 20)
+            if (loginId.text.Length < 8 || loginId.text.Length > 20)
             {
-                Debug.Log("아이디 또는 비밀번호 형식이 잘못되었습니다람쥐");
                 return;
             }
+            if (password.text.Length < 8 || password.text.Length > 20)
+            {
+                return;
+            }
+
 #if NET_MODE
-            netManager.NetSendUserRegister(loginId.text, loginPw.text);
+            netManager.NetSendUserRegister(loginId.text, password.text);
 #endif
 #if FIREBASE_MODE
             netManager.netMessage = NetMessage.RegisterUser;
-            firebaseAuthManager.CreateUser(loginId.text, loginPw.text);
-#endif
+            firebaseAuthManager.CreateUser(loginId.text, password.text);
+#endif            
             ResetLoginUI();
-
         }
 
     }

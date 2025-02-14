@@ -2,7 +2,7 @@ using System;
 
 namespace MySampleEx
 {
-    //프로토콜 번호 정의
+    //프로토롤 번호 정의
     public enum NetMessage
     {
         None = -1,
@@ -10,7 +10,7 @@ namespace MySampleEx
         Login = 1101,
         RegisterUser,
         UserInfo,
-        LevelUp
+        Levelup
     }
 
     //로그인 요청
@@ -19,7 +19,7 @@ namespace MySampleEx
     {
         public int protocol;
         public string userId;
-        public string passWord;
+        public string password;
     }
 
     //로그인 응답
@@ -31,16 +31,16 @@ namespace MySampleEx
         public string userId;
     }
 
-    //유저등록 요청
+    //유저 등록 요청
     [Serializable]
     public class UserRegister
     {
         public int protocol;
         public string userId;
-        public string passWord;
+        public string password;
     }
 
-    //유저등록 응답
+    //유저 등록 응답
     [Serializable]
     public class UserRegisterResult
     {
@@ -49,16 +49,14 @@ namespace MySampleEx
         public string userId;
     }
 
-    //유저정보 가져오기 요청
-    [Serializable]
+    //유저 정보 가져오기 요청
     public class UserInfo
     {
         public int protocol;
         public string userId;
     }
 
-    //유저정보 가져오기 응답
-    [Serializable]
+    //유저 정보 가져오기 응답
     public class UserInfoResult
     {
         public int protocol;
@@ -68,21 +66,20 @@ namespace MySampleEx
         public int gold;
     }
 
-    //레벨업 요청
-    [Serializable]
-    public class UserLevelUp
+    //유저 레벨업 요청
+    public class UserLevelup
     {
         public int protocol;
         public string userId;
     }
 
-    //레벨업 응답
-    [Serializable]
-    public class UserLevelUpResult
+    //유저 레벨업 응답
+    public class UserLevelupResult
     {
         public int protocol;
         public int result;
         public string userId;
         public int level;
     }
+
 }

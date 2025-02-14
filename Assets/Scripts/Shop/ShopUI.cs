@@ -80,10 +80,10 @@ namespace MySampleEx
 
             int price = slotUIs[selectSlotObject].ItemObject.shopPrice;
 
-            if (uIManager.EnoughGold(price))
+            if(uIManager.EnoughGold(price))
             {
                 Item newItem = slotUIs[selectSlotObject].ItemObject.CreateItem();
-                if (uIManager.AddItemInventory(newItem, 1))
+                if(uIManager.AddItemInventory(newItem, 1))
                 {
                     uIManager.UseGold(price);
                     UpdateSelectSlot(null);
@@ -97,9 +97,9 @@ namespace MySampleEx
 
         public void ShowAd()
         {
+#if AD_MODE
             //타이머 - 일정시간동안 광고를 보지 못하도록 한다
 
-#if AD_MODE
             AdManager.Instance.ShowRewardAd();
 #endif
         }

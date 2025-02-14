@@ -23,8 +23,6 @@ namespace MySampleEx
         {
             freeLookCamera.Follow = follow;
             freeLookCamera.LookAt = lookAt;
-
-            freeLookCamera.GetComponent<CinemachineInputAxisController>().enabled = true;
         }
 
         public void SetCinemachineInputAxisController(bool enable)

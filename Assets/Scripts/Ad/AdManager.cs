@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace MySampleEx
 {
-
     /// <summary>
     /// 광고를 관리하는 클래스
     /// 배너광고, 전면광고, 리워드(동영상) 광고 
@@ -224,8 +223,7 @@ namespace MySampleEx
         {
             RequestRewardAd();
         }
-    #endregion
+        #endregion
 #endif
     }
-
 }

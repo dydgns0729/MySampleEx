@@ -182,7 +182,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   database: {fileID: 11400000, guid: 47c8881aa08316849817bbe207cc91b9, type: 2}
+  inventory: {fileID: 0}
+  playerStats: {fileID: 0}
   palyerInventoryUI: {fileID: 781295207307600418}
+  palyerEquipmentUI: {fileID: 0}
+  playerStatsUI: {fileID: 0}
+  dialogUI: {fileID: 0}
+  questUI: {fileID: 0}
+  shopUI: {fileID: 0}
+  itemId: 0
 --- !u!1 &4860565706974815577
 GameObject:
   m_ObjectHideFlags: 0
@@ -251,6 +259,7 @@ MonoBehaviour:
   inventoryObject: {fileID: 11400000, guid: 4b3aa73e770ea174c99354e83f1a2e0b, type: 2}
   slotPrefab: {fileID: 6826494778147101237, guid: b3f479ac9b8dcbb4ab91b244cbbbc7a6, type: 3}
   slotsParent: {fileID: 2550485673314983434}
+  itemInfoUI: {fileID: 0}
 --- !u!1 &5353589720219812926
 GameObject:
   m_ObjectHideFlags: 0
